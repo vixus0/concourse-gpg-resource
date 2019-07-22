@@ -1,0 +1,40 @@
+---
+resource_types:
+  - name: gpg
+    type: docker-image
+    source:
+      repository: vixus0/concourse-gpg-resource
+      tag: latest
+
+resources:
+  - name: git
+    type: git
+    source:
+      uri: https://github.com/vixus0/concourse-gpg-resource.git
+
+  - name: secrets
+    type: gpg
+
+jobs:
+  - name: use-some-secrets
+    plan:
+      - get: git
+        trigger: true
+      - put: secrets
+        inputs:
+          - git/test-secrets
+        params:
+          key: ((key))
+          secrets:
+            - git/test-secrets/hello.txt.gpg
+      - task: say-hello
+        inputs:
+          - git/test-secrets
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source: { repository: alpine }
+          run:
+            path: cat
+            args: [ git/test-secrets/hello.txt ]

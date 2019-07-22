@@ -1,0 +1,10 @@
+#!/usr/bin/env ash
+
+set -o errexit -o nounset -o pipefail
+
+cat > /tmp/input
+
+cd "$1"
+cat /tmp/input | jq -r '.params.key' | gpg --import
+cat /tmp/input | jq -r '.params.secrets | .[]' | xargs gpg --passphrase "$(jq -r .params.passphrase)" --decrypt-files
+cat /tmp/input | jq '{ "version": { "id": .version.id }, "metadata": [{ "success": true }]  }'
